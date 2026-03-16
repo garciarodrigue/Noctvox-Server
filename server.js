@@ -5,42 +5,77 @@ const fastify = Fastify({
   logger: true
 });
 
+/* ========================= */
 /* RUTA PRINCIPAL */
+/* ========================= */
 
 fastify.get("/", async () => {
   return {
     status: "online",
     core: "SYPH//NVX",
-    message: "Servidor activo"
+    ai: "/ai endpoint ready"
   };
 });
 
-/* RUTA PING (para UptimeRobot) */
+/* ========================= */
+/* PING */
+/* ========================= */
 
 fastify.get("/ping", async () => {
   return { pong: true };
 });
 
-/* RUTA HEALTH */
+/* ========================= */
+/* HEALTH */
+/* ========================= */
 
 fastify.get("/health", async () => {
   return {
     status: "ok",
-    uptime: process.uptime()
+    uptime: process.uptime(),
+    ai_key_loaded: !!process.env.AI_KEY
   };
 });
 
-/* RUTA IA */
+/* ========================= */
+/* DEBUG RUTAS */
+/* ========================= */
+
+fastify.get("/routes", async () => {
+  return fastify.printRoutes();
+});
+
+/* ========================= */
+/* IA */
+/* ========================= */
 
 fastify.post("/ai", async (request, reply) => {
 
-  const { prompt } = request.body;
-
-  if (!prompt) {
-    return { error: "Prompt requerido" };
-  }
+  fastify.log.info("===== REQUEST /ai RECIBIDO =====");
 
   try {
+
+    const body = request.body || {};
+
+    fastify.log.info("Body recibido:");
+    fastify.log.info(body);
+
+    const prompt = body.prompt;
+
+    if (!prompt) {
+      return {
+        error: "No se recibió 'prompt'",
+        body_recibido: body
+      };
+    }
+
+    if (!process.env.AI_KEY) {
+      return {
+        error: "AI_KEY no configurada en Render"
+      };
+    }
+
+    fastify.log.info("Enviando prompt a OpenRouter...");
 
     const response = await fetch(
       "https://openrouter.ai/api/v1/chat/completions",
@@ -62,10 +97,31 @@ fastify.post("/ai", async (request, reply) => {
       }
     );
 
-    const data = await response.json();
+    const text = await response.text();
+
+    fastify.log.info("Respuesta cruda OpenRouter:");
+    fastify.log.info(text);
+
+    let data;
+
+    try {
+      data = JSON.parse(text);
+    } catch {
+      return {
+        error: "OpenRouter devolvió algo que no es JSON",
+        raw_response: text
+      };
+    }
 
     const aiResponse =
-      data.choices?.[0]?.message?.content || "No response";
+      data?.choices?.[0]?.message?.content;
+
+    if (!aiResponse) {
+      return {
+        error: "OpenRouter no devolvió respuesta válida",
+        openrouter_response: data
+      };
+    }
 
     return {
       prompt,
@@ -74,17 +130,21 @@ fastify.post("/ai", async (request, reply) => {
 
   } catch (error) {
 
+    fastify.log.error("ERROR EN /ai");
     fastify.log.error(error);
 
     return {
-      error: "Error consultando IA"
+      error: "Fallo interno en servidor",
+      message: error.message
     };
 
   }
 
 });
 
+/* ========================= */
 /* INICIAR SERVIDOR */
+/* ========================= */
 
 const start = async () => {
 

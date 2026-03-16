@@ -4,18 +4,20 @@ const fastify = Fastify({
   logger: true
 });
 
-fastify.get("/", async (request, reply) => {
+/* RUTA PRINCIPAL */
+fastify.get("/", async () => {
   return {
     status: "online",
-    core: "Sypherion Node",
-    message: "Servidor Fastify funcionando"
+    core: "Sypherion Node"
   };
 });
 
+/* RUTA PARA MANTENER DESPIERTO EL SERVER */
 fastify.get("/ping", async () => {
   return { pong: true };
 });
 
+/* INICIAR SERVIDOR */
 const start = async () => {
   try {
     const port = process.env.PORT || 3000;

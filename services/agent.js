@@ -3,6 +3,21 @@ import { webSearch } from "./search.js";
 import { getWeather } from "./weather.js";
 import { getNews } from "./news.js";
 
+function extractJSON(text){
+
+  const cleaned = text
+    .replace(/```json/g,"")
+    .replace(/```/g,"")
+    .trim();
+
+  try{
+    return JSON.parse(cleaned);
+  }catch{
+    return null;
+  }
+
+}
+
 export async function runAgent(prompt){
 
   const system = `
@@ -10,44 +25,30 @@ Eres un agente inteligente conectado a internet.
 
 Herramientas disponibles:
 
-search(query) → buscar información en internet
-weather(city) → obtener clima actual
-news(topic) → obtener noticias recientes
+search(query)
+weather(city)
+news(topic)
 
-REGLAS:
+Reglas:
 
-1. Si la pregunta requiere información actual debes usar herramientas.
-2. Nunca digas que no puedes acceder a internet.
-3. Usa news() para noticias.
-4. Usa weather() para clima.
-5. Usa search() para información general reciente.
+Si necesitas usar una herramienta responde SOLO con JSON.
 
-Si necesitas usar herramienta responde SOLO con JSON:
+Ejemplo:
 
 {
- "tool":"search",
- "input":"consulta"
+ "tool":"news",
+ "input":"Guatemala"
 }
-
-Si no necesitas herramienta responde normalmente.
 `;
 
   const decision = await askAI([
-    {
-      role:"system",
-      content:system
-    },
-    {
-      role:"user",
-      content:`Pregunta del usuario: ${prompt}`
-    }
+    {role:"system",content:system},
+    {role:"user",content:prompt}
   ]);
 
-  let toolCall;
+  const toolCall = extractJSON(decision.content);
 
-  try{
-    toolCall = JSON.parse(decision.content);
-  }catch{
+  if(!toolCall){
     return decision.content;
   }
 
@@ -68,7 +69,7 @@ Si no necesitas herramienta responde normalmente.
   const final = await askAI([
     {
       role:"system",
-      content:"Usa los datos entregados por la herramienta para responder claramente."
+      content:"Responde usando la información obtenida de la herramienta."
     },
     {
       role:"user",
@@ -76,7 +77,7 @@ Si no necesitas herramienta responde normalmente.
     },
     {
       role:"assistant",
-      content:`Datos obtenidos: ${JSON.stringify(toolResult)}`
+      content:`Datos: ${JSON.stringify(toolResult)}`
     }
   ]);
 

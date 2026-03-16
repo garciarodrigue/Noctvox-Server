@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 
-<title>SYPH NVX AI</title>
+<title>SYPH // NVX AI</title>
 
 <style>
 
@@ -13,28 +14,28 @@ color:white;
 display:flex;
 flex-direction:column;
 align-items:center;
+height:100vh;
+margin:0;
 }
 
-#chat{
-width:600px;
-height:400px;
-overflow-y:auto;
-border:1px solid #334155;
-padding:10px;
+h2{
 margin-top:20px;
 }
 
-input{
-width:500px;
-padding:10px;
-}
-
-button{
-padding:10px;
+#chat{
+width:700px;
+height:450px;
+overflow-y:auto;
+border:1px solid #334155;
+padding:15px;
+margin-top:20px;
+background:#020617;
+border-radius:8px;
 }
 
 .message{
-margin:5px 0;
+margin:10px 0;
+line-height:1.5;
 }
 
 .user{
@@ -43,6 +44,31 @@ color:#38bdf8;
 
 .ai{
 color:#22c55e;
+}
+
+#controls{
+margin-top:10px;
+}
+
+input{
+width:500px;
+padding:10px;
+border-radius:5px;
+border:none;
+outline:none;
+}
+
+button{
+padding:10px 15px;
+border:none;
+background:#22c55e;
+color:white;
+border-radius:5px;
+cursor:pointer;
+}
+
+button:hover{
+background:#16a34a;
 }
 
 </style>
@@ -55,21 +81,60 @@ color:#22c55e;
 
 <div id="chat"></div>
 
-<input id="input" placeholder="Escribe algo...">
+<div id="controls">
+<input id="input" placeholder="Habla con la IA...">
 <button onclick="send()">Enviar</button>
+</div>
 
 <script>
+
+function speak(text){
+
+const speech = new SpeechSynthesisUtterance(text);
+
+speech.lang = "es-ES";
+speech.rate = 1;
+speech.pitch = 1;
+
+speechSynthesis.speak(speech);
+
+}
+
+function typeText(element, text, speed = 25){
+
+let i = 0;
+
+function typing(){
+
+if(i < text.length){
+
+element.innerHTML += text.charAt(i);
+i++;
+
+setTimeout(typing, speed);
+
+}
+
+}
+
+typing();
+
+}
 
 async function send(){
 
 const input = document.getElementById("input");
 const chat = document.getElementById("chat");
 
-const text = input.value;
+const text = input.value.trim();
+
+if(!text) return;
 
 chat.innerHTML += `<div class="message user">Tu: ${text}</div>`;
 
 input.value="";
+
+chat.scrollTop = chat.scrollHeight;
 
 const res = await fetch("/ai",{
 method:"POST",
@@ -83,7 +148,15 @@ prompt:text
 
 const data = await res.json();
 
-chat.innerHTML += `<div class="message ai">IA: ${data.response}</div>`;
+const aiMessage = document.createElement("div");
+
+aiMessage.className = "message ai";
+
+chat.appendChild(aiMessage);
+
+typeText(aiMessage, "IA: " + data.response);
+
+speak(data.response);
 
 chat.scrollTop = chat.scrollHeight;
 

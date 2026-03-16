@@ -3,110 +3,95 @@ import { webSearch } from "./search.js";
 import { getWeather } from "./weather.js";
 import { getNews } from "./news.js";
 
+import { addMessage,getConversation } from "../memory/memoryManager.js";
+
 function extractJSON(text){
 
-  const cleaned = text
-    .replace(/```json/g,"")
-    .replace(/```/g,"")
-    .trim();
+const cleaned = text
+.replace(/```json/g,"")
+.replace(/```/g,"")
+.trim();
 
-  try{
-    return JSON.parse(cleaned);
-  }catch{
-    return null;
-  }
+try{
+return JSON.parse(cleaned);
+}catch{
+return null;
+}
 
 }
 
-export async function runAgent(prompt){
+export async function runAgent(userId,prompt){
 
-  const system = `
-Eres un agente inteligente con acceso a internet.
+await addMessage(userId,"user",prompt);
 
-Herramientas disponibles:
+const conversation = await getConversation(userId);
+
+const system = `
+Eres SYPH NVX, el asistente personal de Sypherion.
+
+Tu comportamiento:
+
+• Inteligente
+• Preciso
+• Profesional
+• Usas herramientas cuando es necesario
+• Tienes acceso a internet
+
+Herramientas:
 
 search(query)
-→ úsala para buscar información general o eventos recientes.
-
 weather(city)
-→ úsala cuando el usuario pregunte por clima, temperatura o condiciones meteorológicas.
-
 news(topic)
-→ úsala cuando el usuario pregunte por noticias o eventos actuales.
 
-REGLAS IMPORTANTES:
+Si necesitas herramienta responde SOLO con JSON.
 
-1. Si la pregunta requiere información actual debes usar una herramienta.
-2. Nunca digas que no tienes acceso a internet.
-3. Elige la herramienta correcta según la pregunta.
-
-Formato obligatorio si usas herramienta:
+Ejemplo:
 
 {
  "tool":"search",
- "input":"consulta"
-}
-
-o
-
-{
- "tool":"weather",
- "input":"ciudad"
-}
-
-o
-
-{
- "tool":"news",
- "input":"tema"
+ "input":"Guatemala noticias"
 }
 `;
 
-  const decision = await askAI([
-    {role:"system",content:system},
-    {role:"user",content:prompt}
-  ]);
+const decision = await askAI([
+{
+role:"system",
+content:system
+},
+...conversation.messages.slice(-10)
+]);
 
-  const toolCall = extractJSON(decision.content);
+const toolCall = extractJSON(decision.content);
 
-  let toolResult = null;
+let toolResult=null;
 
-  if(toolCall){
+if(toolCall){
 
-    if(toolCall.tool==="search"){
-      toolResult = await webSearch(toolCall.input);
-    }
+if(toolCall.tool==="search")
+toolResult=await webSearch(toolCall.input);
 
-    if(toolCall.tool==="weather"){
-      toolResult = await getWeather(toolCall.input);
-    }
+if(toolCall.tool==="weather")
+toolResult=await getWeather(toolCall.input);
 
-    if(toolCall.tool==="news"){
-      toolResult = await getNews(toolCall.input);
-    }
+if(toolCall.tool==="news")
+toolResult=await getNews(toolCall.input);
 
-  }
+}
 
-  // fallback automático si la IA no eligió herramienta
-  if(!toolResult){
-    toolResult = await webSearch(prompt);
-  }
+const final = await askAI([
+{
+role:"system",
+content:"Responde usando la información disponible."
+},
+...conversation.messages.slice(-10),
+{
+role:"assistant",
+content:`Datos externos: ${JSON.stringify(toolResult)}`
+}
+]);
 
-  const final = await askAI([
-    {
-      role:"system",
-      content:"Responde usando la información obtenida de internet."
-    },
-    {
-      role:"user",
-      content:prompt
-    },
-    {
-      role:"assistant",
-      content:`Datos obtenidos: ${JSON.stringify(toolResult)}`
-    }
-  ]);
+await addMessage(userId,"assistant",final.content);
 
-  return final.content;
+return final.content;
 
 }

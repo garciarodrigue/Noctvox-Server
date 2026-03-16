@@ -1,18 +1,15 @@
 import Fastify from "fastify";
-import path from "path";
-import fastifyStatic from "@fastify/static";
-
 import aiRoute from "./routes/aiRoute.js";
+
+import { connectDB } from "./database/mongo.js";
 
 const fastify = Fastify({logger:true});
 
-fastify.register(fastifyStatic,{
-root:path.join(process.cwd(),"public")
-});
-
 fastify.register(aiRoute);
 
-const start = async ()=>{
+const start = async()=>{
+
+await connectDB();
 
 await fastify.listen({
 port:process.env.PORT || 3000,

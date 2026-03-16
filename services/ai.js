@@ -2,7 +2,7 @@ import fetch from "node-fetch";
 
 export async function askAI(messages){
 
-  const res = await fetch(
+  const response = await fetch(
     "https://openrouter.ai/api/v1/chat/completions",
     {
       method:"POST",
@@ -17,8 +17,13 @@ export async function askAI(messages){
     }
   );
 
-  const data = await res.json();
+  const data = await response.json();
 
-  return data.choices?.[0]?.message;
+  if(!data.choices){
+    console.log("OpenRouter error:", data);
+    return {content:"Error consultando IA"};
+  }
+
+  return data.choices[0].message;
 
 }

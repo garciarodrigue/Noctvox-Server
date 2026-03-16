@@ -3,17 +3,17 @@ import aiRoute from "./routes/aiRoute.js";
 
 const fastify = Fastify({logger:true});
 
-fastify.get("/",async()=>{
+fastify.get("/", async ()=>{
   return {status:"online"};
 });
 
-fastify.get("/ping",async()=>{
+fastify.get("/ping", async ()=>{
   return {pong:true};
 });
 
 fastify.register(aiRoute);
 
-const start = async()=>{
+const start = async ()=>{
 
   const port = process.env.PORT || 3000;
 

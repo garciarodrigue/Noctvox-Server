@@ -6,29 +6,41 @@ import { getNews } from "./news.js";
 export async function runAgent(prompt){
 
   const system = `
-Eres un agente inteligente.
+Eres un agente inteligente conectado a internet.
 
-Puedes usar herramientas:
+Herramientas disponibles:
 
-search(query)
-weather(city)
-news(topic)
+search(query) → buscar información en internet
+weather(city) → obtener clima actual
+news(topic) → obtener noticias recientes
 
-Si necesitas información responde SOLO con JSON:
+REGLAS:
+
+1. Si la pregunta requiere información actual debes usar herramientas.
+2. Nunca digas que no puedes acceder a internet.
+3. Usa news() para noticias.
+4. Usa weather() para clima.
+5. Usa search() para información general reciente.
+
+Si necesitas usar herramienta responde SOLO con JSON:
 
 {
  "tool":"search",
  "input":"consulta"
 }
 
-o weather o news.
-
-Si no necesitas herramientas responde normalmente.
+Si no necesitas herramienta responde normalmente.
 `;
 
   const decision = await askAI([
-    {role:"system",content:system},
-    {role:"user",content:prompt}
+    {
+      role:"system",
+      content:system
+    },
+    {
+      role:"user",
+      content:`Pregunta del usuario: ${prompt}`
+    }
   ]);
 
   let toolCall;
@@ -53,10 +65,10 @@ Si no necesitas herramientas responde normalmente.
     toolResult = await getNews(toolCall.input);
   }
 
-  const finalAnswer = await askAI([
+  const final = await askAI([
     {
       role:"system",
-      content:"Usa los datos de la herramienta para responder con un resumen claro."
+      content:"Usa los datos entregados por la herramienta para responder claramente."
     },
     {
       role:"user",
@@ -64,10 +76,10 @@ Si no necesitas herramientas responde normalmente.
     },
     {
       role:"assistant",
-      content:`Datos herramienta: ${JSON.stringify(toolResult)}`
+      content:`Datos obtenidos: ${JSON.stringify(toolResult)}`
     }
   ]);
 
-  return finalAnswer.content;
+  return final.content;
 
 }

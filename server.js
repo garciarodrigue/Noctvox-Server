@@ -86,7 +86,7 @@ fastify.post("/ai", async (request, reply) => {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          model: "openchat/openchat-3.5-0106:free",
+          model: "openrouter/auto",
           messages: [
             {
               role: "user",

@@ -1,154 +1,219 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="es">
 <head>
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SYPH // NVX AI</title>
-
 <style>
+    /* Reset y tipografía */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: #0f172a;
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        min-height: 100vh;
+        padding: 20px;
+    }
 
-body{
-font-family:Arial;
-background:#0f172a;
-color:white;
-display:flex;
-flex-direction:column;
-align-items:center;
-height:100vh;
-margin:0;
-}
+    h2 {
+        margin-bottom: 15px;
+        font-weight: 600;
+        color: #38bdf8;
+        text-align: center;
+    }
 
-#chat{
-width:700px;
-height:450px;
-overflow-y:auto;
-border:1px solid #334155;
-padding:15px;
-margin-top:20px;
-background:#020617;
-border-radius:8px;
-}
+    /* Contenedor de chat */
+    #chat {
+        width: 100%;
+        max-width: 700px;
+        height: 60vh;
+        background: #020617;
+        border: 1px solid #334155;
+        border-radius: 12px;
+        padding: 20px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        scroll-behavior: smooth;
+    }
 
-.message{
-margin:10px 0;
-}
+    /* Mensajes */
+    .message {
+        max-width: 80%;
+        padding: 10px 15px;
+        border-radius: 12px;
+        line-height: 1.4;
+        word-wrap: break-word;
+        animation: fadeIn 0.2s ease-in-out;
+    }
 
-.user{
-color:#38bdf8;
-}
+    .user {
+        align-self: flex-end;
+        background: #1e3a8a;
+        color: #38bdf8;
+        border-bottom-right-radius: 0;
+    }
 
-.ai{
-color:#22c55e;
-}
+    .ai {
+        align-self: flex-start;
+        background: #064e3b;
+        color: #22c55e;
+        border-bottom-left-radius: 0;
+    }
 
-input{
-width:500px;
-padding:10px;
-}
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
 
-button{
-padding:10px;
-}
+    /* Input y botón */
+    .input-container {
+        width: 100%;
+        max-width: 700px;
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+    }
 
+    #input {
+        flex: 1;
+        padding: 12px 15px;
+        border-radius: 8px;
+        border: 1px solid #334155;
+        background: #1e293b;
+        color: #fff;
+        font-size: 16px;
+        outline: none;
+    }
+
+    #input::placeholder {
+        color: #94a3b8;
+    }
+
+    button {
+        padding: 12px 20px;
+        border: none;
+        border-radius: 8px;
+        background: #38bdf8;
+        color: #0f172a;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    button:hover {
+        background: #0ea5e9;
+    }
+
+    /* Responsive */
+    @media(max-width: 768px) {
+        #chat {
+            height: 55vh;
+            padding: 15px;
+        }
+
+        #input {
+            font-size: 14px;
+        }
+
+        button {
+            padding: 10px 15px;
+            font-size: 14px;
+        }
+    }
+
+    @media(max-width: 480px) {
+        #chat {
+            height: 50vh;
+        }
+    }
 </style>
-
 </head>
-
 <body>
-
-<h2>SYPH // NVX</h2>
+<h2>SYPH // NVX AI</h2>
 
 <div id="chat"></div>
 
-<div>
-
-<input id="input" placeholder="Habla con la IA">
-<button onclick="send()">Enviar</button>
-
+<div class="input-container">
+    <input id="input" placeholder="Habla con Noctvox" autocomplete="off">
+    <button onclick="send()">Enviar</button>
 </div>
 
 <script>
-
 function speak(text){
-
-const speech = new SpeechSynthesisUtterance(text);
-
-speech.lang="es-ES";
-
-speechSynthesis.speak(speech);
-
+    const speech = new SpeechSynthesisUtterance(text);
+    speech.lang = "es-ES";
+    speech.rate = 1;
+    speech.pitch = 1;
+    speechSynthesis.speak(speech);
 }
 
-function typeText(element,text,speed=20){
-
-let i=0;
-
-function typing(){
-
-if(i<text.length){
-
-element.innerHTML+=text.charAt(i);
-
-i++;
-
-setTimeout(typing,speed);
-
-}
-
-}
-
-typing();
-
+function typeText(element, text, speed=20){
+    let i = 0;
+    element.innerHTML = "";
+    function typing(){
+        if(i < text.length){
+            element.innerHTML += text.charAt(i);
+            i++;
+            setTimeout(typing, speed);
+        }
+    }
+    typing();
 }
 
 async function send(){
+    const input = document.getElementById("input");
+    const chat = document.getElementById("chat");
 
-const input=document.getElementById("input");
+    const text = input.value.trim();
+    if(!text) return;
 
-const chat=document.getElementById("chat");
+    // Mostrar mensaje del usuario
+    const userMsg = document.createElement("div");
+    userMsg.className = "message user";
+    userMsg.textContent = `Sypherion: ${text}`;
+    chat.appendChild(userMsg);
+    chat.scrollTop = chat.scrollHeight;
 
-const text=input.value.trim();
+    input.value = "";
 
-if(!text) return;
+    // Llamada al servidor
+    try {
+        const res = await fetch("/ai", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ prompt: text, userId: "sypherion" })
+        });
 
-chat.innerHTML+=`<div class="message user">Tu: ${text}</div>`;
+        const data = await res.json();
+        const aiMsg = document.createElement("div");
+        aiMsg.className = "message ai";
+        chat.appendChild(aiMsg);
 
-input.value="";
+        // Escritura progresiva y voz
+        typeText(aiMsg, "Noctvox: " + data.response, 25);
+        speak(data.response);
 
-const res=await fetch("/ai",{
-
-method:"POST",
-
-headers:{
-"Content-Type":"application/json"
-},
-
-body:JSON.stringify({
-
-prompt:text,
-userId:"sypherion"
-
-})
-
-});
-
-const data=await res.json();
-
-const aiMessage=document.createElement("div");
-
-aiMessage.className="message ai";
-
-chat.appendChild(aiMessage);
-
-typeText(aiMessage,"IA: "+data.response);
-
-speak(data.response);
-
-chat.scrollTop=chat.scrollHeight;
-
+        chat.scrollTop = chat.scrollHeight;
+    } catch(e){
+        const errMsg = document.createElement("div");
+        errMsg.className = "message ai";
+        errMsg.textContent = "IA: Error al conectar con el servidor.";
+        chat.appendChild(errMsg);
+        chat.scrollTop = chat.scrollHeight;
+        console.error(e);
+    }
 }
 
+// Enter para enviar mensaje
+document.getElementById("input").addEventListener("keypress", function(e){
+    if(e.key === "Enter") send();
+});
 </script>
-
 </body>
 </html>

@@ -1,13 +1,14 @@
-import { askAI } from "./ai.js";
+import { askMain } from "./aiMain.js";
 import { webSearch } from "./search.js";
 import { getWeather } from "./weather.js";
 import { getNews } from "./news.js";
 
-import { addMessage,getConversation } from "../memory/memoryManager.js";
+import { getMemories } from "../memory/getMemories.js";
+import { processMemory } from "../memory/memoryEngine.js";
 
 function extractJSON(text){
 
-const cleaned = text
+const cleaned=text
 .replace(/```json/g,"")
 .replace(/```/g,"")
 .trim();
@@ -22,28 +23,24 @@ return null;
 
 export async function runAgent(userId,prompt){
 
-await addMessage(userId,"user",prompt);
-
-const conversation = await getConversation(userId);
+const memories = await getMemories(userId);
 
 const system = `
-Eres SYPH NVX, el asistente personal de Sypherion.
+Eres SYPH NVX.
 
-Tu comportamiento:
+Asistente avanzado.
 
-• Inteligente
-• Preciso
-• Profesional
-• Usas herramientas cuando es necesario
-• Tienes acceso a internet
-
-Herramientas:
+Tienes acceso a herramientas:
 
 search(query)
 weather(city)
 news(topic)
 
-Si necesitas herramienta responde SOLO con JSON.
+Memorias importantes del usuario:
+
+${memories.join("\n")}
+
+Si necesitas usar herramienta responde SOLO JSON.
 
 Ejemplo:
 
@@ -53,12 +50,9 @@ Ejemplo:
 }
 `;
 
-const decision = await askAI([
-{
-role:"system",
-content:system
-},
-...conversation.messages.slice(-10)
+const decision = await askMain([
+{role:"system",content:system},
+{role:"user",content:prompt}
 ]);
 
 const toolCall = extractJSON(decision.content);
@@ -78,19 +72,22 @@ toolResult=await getNews(toolCall.input);
 
 }
 
-const final = await askAI([
+const final = await askMain([
 {
 role:"system",
-content:"Responde usando la información disponible."
+content:"Responde usando datos externos si existen."
 },
-...conversation.messages.slice(-10),
 {
 role:"assistant",
 content:`Datos externos: ${JSON.stringify(toolResult)}`
+},
+{
+role:"user",
+content:prompt
 }
 ]);
 
-await addMessage(userId,"assistant",final.content);
+await processMemory(userId,prompt,final.content);
 
 return final.content;
 

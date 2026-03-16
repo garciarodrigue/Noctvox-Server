@@ -1,37 +1,45 @@
 import Fastify from "fastify";
-import aiRoute from "./routes/aiRoute.js";
+import fastifyStatic from "@fastify/static";
+import path from "path";
+import { fileURLToPath } from "url";
+
 import { connectDB } from "./database/mongo.js";
+import aiRoute from "./routes/aiRoute.js";
 
-const fastify = Fastify({ logger: true });
+const fastify = Fastify({ logger:true });
 
-/* RUTA PRINCIPAL */
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-fastify.get("/", async () => {
-  return {
-    status: "online",
-    core: "SYPH // NVX",
-    message: "Servidor activo"
-  };
+/* FRONTEND */
+
+fastify.register(fastifyStatic,{
+root: path.join(__dirname,"public"),
+prefix:"/"
 });
 
-/* RUTA PING */
-
-fastify.get("/ping", async () => {
-  return { pong: true };
-});
-
-/* RUTA IA */
+/* API IA */
 
 fastify.register(aiRoute);
 
-const start = async () => {
+/* RUTA PING */
 
-  await connectDB();
+fastify.get("/ping",async ()=>{
+return {pong:true};
+});
 
-  await fastify.listen({
-    port: process.env.PORT || 3000,
-    host: "0.0.0.0"
-  });
+/* INICIAR SERVIDOR */
+
+const start = async()=>{
+
+await connectDB();
+
+await fastify.listen({
+port:process.env.PORT || 3000,
+host:"0.0.0.0"
+});
+
+console.log("Servidor activo");
 
 };
 

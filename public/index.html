@@ -18,10 +18,6 @@ height:100vh;
 margin:0;
 }
 
-h2{
-margin-top:20px;
-}
-
 #chat{
 width:700px;
 height:450px;
@@ -35,7 +31,6 @@ border-radius:8px;
 
 .message{
 margin:10px 0;
-line-height:1.5;
 }
 
 .user{
@@ -46,29 +41,13 @@ color:#38bdf8;
 color:#22c55e;
 }
 
-#controls{
-margin-top:10px;
-}
-
 input{
 width:500px;
 padding:10px;
-border-radius:5px;
-border:none;
-outline:none;
 }
 
 button{
-padding:10px 15px;
-border:none;
-background:#22c55e;
-color:white;
-border-radius:5px;
-cursor:pointer;
-}
-
-button:hover{
-background:#16a34a;
+padding:10px;
 }
 
 </style>
@@ -77,13 +56,15 @@ background:#16a34a;
 
 <body>
 
-<h2>SYPH // NVX AI</h2>
+<h2>SYPH // NVX</h2>
 
 <div id="chat"></div>
 
-<div id="controls">
-<input id="input" placeholder="Habla con la IA...">
+<div>
+
+<input id="input" placeholder="Habla con la IA">
 <button onclick="send()">Enviar</button>
+
 </div>
 
 <script>
@@ -92,26 +73,25 @@ function speak(text){
 
 const speech = new SpeechSynthesisUtterance(text);
 
-speech.lang = "es-ES";
-speech.rate = 1;
-speech.pitch = 1;
+speech.lang="es-ES";
 
 speechSynthesis.speak(speech);
 
 }
 
-function typeText(element, text, speed = 25){
+function typeText(element,text,speed=20){
 
-let i = 0;
+let i=0;
 
 function typing(){
 
-if(i < text.length){
+if(i<text.length){
 
-element.innerHTML += text.charAt(i);
+element.innerHTML+=text.charAt(i);
+
 i++;
 
-setTimeout(typing, speed);
+setTimeout(typing,speed);
 
 }
 
@@ -123,42 +103,48 @@ typing();
 
 async function send(){
 
-const input = document.getElementById("input");
-const chat = document.getElementById("chat");
+const input=document.getElementById("input");
 
-const text = input.value.trim();
+const chat=document.getElementById("chat");
+
+const text=input.value.trim();
 
 if(!text) return;
 
-chat.innerHTML += `<div class="message user">Tu: ${text}</div>`;
+chat.innerHTML+=`<div class="message user">Tu: ${text}</div>`;
 
 input.value="";
 
-chat.scrollTop = chat.scrollHeight;
+const res=await fetch("/ai",{
 
-const res = await fetch("/ai",{
 method:"POST",
+
 headers:{
 "Content-Type":"application/json"
 },
+
 body:JSON.stringify({
-prompt:text
+
+prompt:text,
+userId:"sypherion"
+
 })
+
 });
 
-const data = await res.json();
+const data=await res.json();
 
-const aiMessage = document.createElement("div");
+const aiMessage=document.createElement("div");
 
-aiMessage.className = "message ai";
+aiMessage.className="message ai";
 
 chat.appendChild(aiMessage);
 
-typeText(aiMessage, "IA: " + data.response);
+typeText(aiMessage,"IA: "+data.response);
 
 speak(data.response);
 
-chat.scrollTop = chat.scrollHeight;
+chat.scrollTop=chat.scrollHeight;
 
 }
 

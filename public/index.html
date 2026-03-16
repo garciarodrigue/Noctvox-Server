@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>SYPH NVX AI</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#0f172a;
+color:white;
+display:flex;
+flex-direction:column;
+align-items:center;
+}
+
+#chat{
+width:600px;
+height:400px;
+overflow-y:auto;
+border:1px solid #334155;
+padding:10px;
+margin-top:20px;
+}
+
+input{
+width:500px;
+padding:10px;
+}
+
+button{
+padding:10px;
+}
+
+.message{
+margin:5px 0;
+}
+
+.user{
+color:#38bdf8;
+}
+
+.ai{
+color:#22c55e;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h2>SYPH // NVX AI</h2>
+
+<div id="chat"></div>
+
+<input id="input" placeholder="Escribe algo...">
+<button onclick="send()">Enviar</button>
+
+<script>
+
+async function send(){
+
+const input = document.getElementById("input");
+const chat = document.getElementById("chat");
+
+const text = input.value;
+
+chat.innerHTML += `<div class="message user">Tu: ${text}</div>`;
+
+input.value="";
+
+const res = await fetch("/ai",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+prompt:text
+})
+});
+
+const data = await res.json();
+
+chat.innerHTML += `<div class="message ai">IA: ${data.response}</div>`;
+
+chat.scrollTop = chat.scrollHeight;
+
+}
+
+</script>
+
+</body>
+</html>
